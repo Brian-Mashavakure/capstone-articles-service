@@ -20,41 +20,51 @@ load_dotenv()
 #articles functionality
 apiKey = os.getenv("SERP_API_KEY")
 
-def getcancerarticles():
-    search = GoogleSearch({
-        "q": "skin cancer",
-        "api_key": apiKey
-    })
+# def getcancerarticles():
+#     search = GoogleSearch({
+#         "q": "skin cancer",
+#         "api_key": apiKey
+#     })
 
-    results = search.get_dict()
-    print(results)
-    articles = results.get('knowledge_graph', {}).get('buttons', [])
+#     results = search.get_dict()
+#     print(results)
+#     articles = results.get('knowledge_graph', {}).get('buttons', [])
 
-    for article in articles:
-        article.setdefault('serpapi_api_link', '')
-        article.setdefault('date', '')
-    print(articles)
-    return articles
+#     for article in articles:
+#         article.setdefault('serpapi_api_link', '')
+#         article.setdefault('date', '')
+#     print(articles)
+#     return articles
+
+def get_cancer_articles():
+    try:
+        search = GoogleSearch({
+            "q": "skin cancer",
+            "api_key": apiKey
+        })
+
+        results = search.get_dict()
+        #print("Äpi Response:", results)
+        articles = results.get('organic_results', []) #.get('buttons', [])
+        print(articles)
+        return articles
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 #model functionality
 # Load the pre-trained model
-model = tf.keras.models.load_model("model/my_model.h5")
+model = tf.keras.models.load_model("articles-service/model/my_model.h5")
 
 # Define labels
 labels = {0: "malignant", 1: "benign"}
 
 
 @app.get('/capstone/api/articles')
-def index()->list[Article]:
-    try:
-        articles = getcancerarticles()
-        if articles:
-            return articles
-        else:
-            raise HTTPException(status_code=404, detail="No articles found")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+def index():
+    return get_cancer_articles()
 
 
 @app.post('/capstone/api/model')
